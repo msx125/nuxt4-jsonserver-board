@@ -1,4 +1,10 @@
 {
-  "posts": [],
+  "posts": [
+    { "id": 1,
+      "title": "첫 글",
+      "answerStatus": "received",
+      "createdAt": "2025-08-14",
+      "attachments": [] }
+  ],
   "comments": []
 }

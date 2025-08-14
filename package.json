@@ -9,6 +9,7 @@
     "dev:web": "pnpm -C apps/web dev"
   },
   "keywords": [],
+
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.14.0",
