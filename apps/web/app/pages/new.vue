@@ -8,9 +8,9 @@
           <label class="label required">문의 센터</label>
           <select v-model="form.center" class="select" required>
             <option value="" disabled>선택</option>
-            <option value="자격관리센터">자격관리센터</option>
-            <option value="현장실습센터">현장실습센터</option>
-            <option value="보수교육센터">보수교육센터</option>
+            <option value="아이디벨 센터">아이디벨 센터</option>
+            <option value="하남시 센터">하남시 센터</option>
+            <option value="보수교육센터">강변 SK V1 센터</option>
           </select>
         </div>
 
@@ -38,6 +38,7 @@
       <div class="row">
         <div class="field grow">
           <label class="label required">제목</label>
+          <!-- .trim 양쪽 공백 자르기 -->
           <input v-model.trim="form.title" type="text" class="input" placeholder="제목을 입력하세요" required />
         </div>
       </div>
@@ -81,6 +82,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 
+// DB 정의
 type InquiryCreate = {
   center: string
   type: string
@@ -92,15 +94,22 @@ type InquiryCreate = {
   files: Array<{ name: string; size: number; type: string }>
 }
 
+// 페이지 라우팅(이동) 훅
 const router = useRouter()
+
+// 알럿 및 모달 훅 - 이거 전부 다 사용되니까 컴포넌트로 빼야하나?
 const confirm = useConfirm()
 const toast = useToast()
+
+// 하드코딩 안하고 nuxt.config.ts에 기재
 const { public: { apiBase } } = useRuntimeConfig()
 
-// ✅ 목록 경로/키 (프로젝트 경로에 맞게 조정)
+// 하드코딩된 문자열 최대한 모아두기... -> 나중에 별도 폴더로 빼기. 공식문서 디렉토리 구조에 명시된 권장 내용은 없음
 const LIST_KEY = 'inquiries-list'
 const LIST_ROUTE = '/'
 
+// 데이터 담아둘 객체 & 객체를 반응형으로 추적 & 데이터 타입 지정
+// template 태그 내 v-model 로 연결할 것
 const form = reactive<InquiryCreate>({
   center: '',
   type: '',
@@ -112,25 +121,37 @@ const form = reactive<InquiryCreate>({
   files: []
 })
 
+
+// TypeScript 로 파일만 배열로 받아서 반응형으로 추적
 const files = ref<File[]>([])
+
+// <input type="file"> DOM 요소 수정
 const fileInput = ref<HTMLInputElement | null>(null)
+
+// 임의로 만든 상태 대기
 const pending = ref(false)
+
+// 변수 나중에 어떻게 모을지 고민하기
 const MAX_FILES = 5
 
 function onPickFiles (e: Event) {
   const target = e.target as HTMLInputElement
+  // 파일들 진짜 배열로 전환
   const picked = Array.from(target.files || [])
   const merged = [...files.value, ...picked].slice(0, MAX_FILES)
   files.value = merged
   if (fileInput.value) fileInput.value.value = ''
 }
+
 function removeFile (i: number) {
   files.value.splice(i, 1)
 }
+
 function clearFiles () {
   files.value = []
   if (fileInput.value) fileInput.value.value = ''
 }
+
 function prettySize (bytes: number) {
   if (bytes < 1024) return `${bytes} B`
   const kb = bytes / 1024
@@ -171,10 +192,11 @@ function onCancel () {
     acceptLabel: '취소하기',
     acceptClass: 'p-button-danger',
     async accept() {
-      await router.replace(LIST_ROUTE)
+      await router.replace('/')
     }
   })
 }
+
 </script>
 
 <style scoped>

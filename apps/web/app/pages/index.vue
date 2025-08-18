@@ -1,6 +1,7 @@
 <!-- html 작성 -->
 <template>
   <section class="card">
+
     <div class="card-head">
       <h1>1:1 문의 내역</h1>
 
@@ -34,6 +35,7 @@
           </tr>
           </thead>
           <tbody>
+
           <!-- 로딩/에러/빈 상태 -->
           <tr v-if="pending"><td colspan="5">불러오는 중…</td></tr>
           <tr v-else-if="error"><td colspan="5">목록을 불러오지 못했습니다.</td></tr>
@@ -65,6 +67,7 @@
         <button class="btn primary" @click="writeNew">1:1 문의 작성</button>
       </div>
     </div>
+
   </section>
 </template>
 
@@ -80,20 +83,26 @@ type Inquiry = {
   files?: FileMeta[]
   answered: boolean
   createdAt: string
-
 }
+
 const { public: { apiBase } } = useRuntimeConfig()
-// 목록 로드 (최신 id 순)
+
+// useAsyncData, 비동기로 데이터 접근해서 불러올때 사용하는 내장 composable
+const LIST_KEY = 'inquiries-list'
 const { data, pending, error, refresh } = await useAsyncData<Inquiry[]>(
-    'inquiries-list',
+    LIST_KEY,
     () => $fetch('/inquiries', {
       baseURL: apiBase,
       query: { _sort: 'id', _order: 'desc' }
     })
 )
+
 const inquiries = computed(() => data.value ?? [])
+
 const fmtDate = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '')
+
 const writeNew = () => navigateTo('/new')
+
 // (선택) 탭 카운트용 간단 집계
 const counts = computed<Record<string, number>>(() => {
   const c: Record<string, number> = {}
@@ -105,6 +114,7 @@ const counts = computed<Record<string, number>>(() => {
   }
   return c
 })
+
 </script>
 
 <style scoped>
@@ -126,6 +136,7 @@ const counts = computed<Record<string, number>>(() => {
 .table tbody td { padding: 14px; border-bottom: 1px solid #f3f4f6; color: #111827; }
 .table tbody tr:last-child td { border-bottom: 0; }
 .table .empty td { text-align: center; color: #6b7280; }
+.table thead th {text-align: center;}
 .attach-cell { text-align: center; }
 .toolbar { margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; }
 .btn { appearance: none; border: 1px solid #d1d5db; background: #fff; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; }

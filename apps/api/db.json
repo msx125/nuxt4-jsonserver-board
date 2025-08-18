@@ -21,6 +21,39 @@
       "answered": false,
       "createdAt": "2025-08-18T01:33:57.636Z",
       "files": []
+    },
+    {
+      "id": "6daf",
+      "center": "보수교육센터",
+      "type": "이의신청",
+      "source": "모바일",
+      "title": "sdf",
+      "content": "sdf",
+      "answered": false,
+      "createdAt": "2025-08-18T07:03:42.032Z",
+      "files": []
+    },
+    {
+      "id": "0bbd",
+      "center": "자격관리센터",
+      "type": "일반",
+      "source": "모바일",
+      "title": "Test5",
+      "content": "Test5 입니다. 수정하겠습니다.",
+      "answered": false,
+      "createdAt": "2025-08-18T08:18:04.679Z",
+      "files": []
+    },
+    {
+      "id": "ffdd",
+      "center": "아이디벨 센터",
+      "type": "일반",
+      "source": "웹",
+      "title": "Test6",
+      "content": "Test6 입니다.",
+      "answered": false,
+      "createdAt": "2025-08-18T09:13:14.431Z",
+      "files": []
     }
   ]
 }
