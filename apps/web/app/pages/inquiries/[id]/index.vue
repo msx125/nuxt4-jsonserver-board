@@ -1,15 +1,12 @@
-<!-- pages/inquiries/[id].vue -->
 <template>
   <section class="card">
     <div class="card-head"><h1>1:1 문의 상세</h1></div>
 
     <div class="card-body">
-      <!-- 상태 분기 -->
       <div v-if="pending">불러오는 중…</div>
       <div v-else-if="error">존재하지 않거나 불러올 수 없습니다.</div>
       <div v-else-if="!inquiry">데이터가 없습니다.</div>
 
-      <!-- 상세 본문 -->
       <div v-else class="detail">
         <dl class="meta">
           <div><dt>센터</dt><dd>{{ inquiry.center }}</dd></div>
@@ -32,9 +29,9 @@
         </div>
 
         <div class="toolbar">
-          <!-- 동적 바인딩으로 실제 id가 들어가도록 -->
-          <NuxtLink class="btn" :to="editHref">수정하기</NuxtLink>
-          <NuxtLink class="btn" to="/">되돌아가기</NuxtLink>
+          <NuxtLink class="btn" :to="{ name: 'inquiries-id-edit', params: { id: routeId } }">수정하기</NuxtLink>
+          <NuxtLink class="btn" :to="LIST_ROUTE">되돌아가기</NuxtLink>
+          <button type="button" class="btn danger" @click="onDelete">삭제하기</button>
         </div>
       </div>
     </div>
@@ -58,18 +55,22 @@ type Inquiry = {
 }
 
 const route = useRoute()
+const router = useRouter()
+const confirm = useConfirm()
+const toast = useToast()
 const { public:{ apiBase } } = useRuntimeConfig()
 
-// ✅ 라우팅용 / API용 id 분리
-const raw = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
-const routeId = String(raw ?? '').trim()          // 라우팅에 그대로 사용
-const apiId   = encodeURIComponent(routeId)       // API 호출에 안전하게 사용
+// ✅ 목록 경로/키 (프로젝트에 맞게 경로를 '/' 또는 '/inquiries'로 조정)
+const LIST_KEY = 'inquiries-list'
+const LIST_ROUTE = '/'
 
+const raw = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
+const routeId = String(raw ?? '').trim()
+const apiId   = encodeURIComponent(routeId)
 if (!routeId) {
   throw createError({ statusCode: 404, statusMessage: '잘못된 경로입니다.' })
 }
 
-// ✅ 단건 조회 (에러는 error 분기로 노출되도록 catch 없이 던지게 둠)
 const { data, pending, error } = await useAsyncData<Inquiry>(
     `inquiry-detail-${apiId}`,
     () => $fetch('/inquiries/' + apiId, { baseURL: apiBase })
@@ -77,10 +78,6 @@ const { data, pending, error } = await useAsyncData<Inquiry>(
 
 const inquiry = computed(() => data.value)
 
-// ✅ 링크 계산
-const editHref = computed(() => '/inquiries/' + routeId + '/edit')
-
-// ✅ 표시용 유틸
 const fmtDate = (iso?: string) =>
     iso ? new Date(iso).toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' }) : ''
 
@@ -89,6 +86,27 @@ const prettySize = (bytes:number) => {
   const kb = bytes / 1024
   if (kb < 1024) return `${kb.toFixed(1)} KB`
   return `${(kb/1024).toFixed(1)} MB`
+}
+
+function onDelete() {
+  confirm.require({
+    header: '삭제 확인',
+    message: '정말 삭제하시겠습니까?',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: '취소',
+    acceptLabel: '삭제',
+    acceptClass: 'p-button-danger',
+    async accept() {
+      try {
+        await $fetch('/inquiries/' + apiId, { baseURL: apiBase, method: 'DELETE' })
+        await refreshNuxtData(LIST_KEY)
+        toast.add({ severity: 'success', summary: '완료', detail: '삭제되었습니다.', life: 2000 })
+        await router.replace(LIST_ROUTE)
+      } catch (err:any) {
+        toast.add({ severity: 'error', summary: '실패', detail: err?.message || '삭제 실패', life: 3000 })
+      }
+    }
+  })
 }
 </script>
 
@@ -104,4 +122,6 @@ const prettySize = (bytes:number) => {
 .files h3 { margin:16px 0 8px; }
 .toolbar { display:flex; gap:8px; margin-top:16px; }
 .btn { appearance:none; border:1px solid #d1d5db; background:#fff; padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:700; }
+.btn.danger { border-color:#dc2626; background:#dc2626; color:#fff; }
+.btn.danger:hover { background:#b91c1c; }
 </style>

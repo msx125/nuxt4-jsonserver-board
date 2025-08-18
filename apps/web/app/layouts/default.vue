@@ -1,5 +1,10 @@
+<!-- layouts/default.vue -->
 <template>
   <div class="layout">
+    <!-- ✅ 전역 컨펌/토스트 -->
+    <ConfirmDialog />
+    <Toast />
+
     <Header />
 
     <div class="page-wrap">
@@ -17,8 +22,10 @@
   </div>
 </template>
 
-<script setup>
-// Nuxt는 components 자동 임포트가 기본값이라 import 불필요
+<script setup lang="ts">
+import ConfirmDialog from 'primevue/confirmdialog'
+import Toast from 'primevue/toast'
+// Nuxt는 components 자동 임포트 지원 → Header/Lnb/AppFooter는 import 불필요
 </script>
 
 <style scoped>

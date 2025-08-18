@@ -53,21 +53,11 @@
         </div>
       </div>
 
-      <!-- (선택) 답변 여부 토글 -->
-      <div class="row">
-        <div class="field">
-          <label class="label">답변 여부</label>
-          <select v-model="form.answered" class="select">
-            <option :value="false">대기</option>
-            <option :value="true">답변완료</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- (선택) 파일 메타 수정 -->
+      <!-- 파일 메타 (선택 즉시 반영) -->
       <div class="row">
         <div class="field grow">
-          <label class="label">첨부파일(메타)</label>
+          <label class="label">첨부파일</label>
+
           <ul class="file-list" v-if="form.files?.length">
             <li v-for="(f,i) in form.files" :key="i" class="file-item">
               <span class="name">{{ f.name }}</span>
@@ -75,12 +65,13 @@
               <button type="button" class="link" @click="removeFile(i)">삭제</button>
             </li>
           </ul>
-          <p v-else class="empty-file">현재 첨부 메타가 없습니다.</p>
+          <p v-else class="empty-file">현재 첨부가 없습니다.</p>
 
           <div class="upload">
             <input ref="fileInput" type="file" class="file" multiple @change="onPickFiles" />
             <button type="button" class="btn" @click="fileInput?.click()">파일 추가</button>
-            <button type="button" class="btn" @click="clearFiles" :disabled="pickedFiles.length===0">추가 취소</button>
+            <button type="button" class="btn" @click="clearFiles">추가 취소</button>
+            <span class="meta" style="margin-left:8px;">최대 {{ MAX_FILES }}개</span>
           </div>
         </div>
       </div>
@@ -88,7 +79,7 @@
       <!-- 하단 버튼 -->
       <div class="toolbar">
         <NuxtLink class="btn ghost" :to="detailHref">취소</NuxtLink>
-        <button type="submit" class="btn primary" :disabled="pending">저장</button>
+        <button type="submit" class="btn primary" :disabled="pending || loading">저장</button>
       </div>
     </form>
   </section>
@@ -124,7 +115,7 @@ if (!routeId) throw createError({ statusCode: 404, statusMessage: '잘못된 경
 const detailHref = computed(() => '/inquiries/' + routeId)
 
 // 기존 데이터 불러오기
-const { data, pending: loading, error } = await useAsyncData<Inquiry | null>(
+const { data, pending: loading } = await useAsyncData<Inquiry | null>(
     'inquiry-detail-' + apiId,
     async () => {
       try {
@@ -138,27 +129,44 @@ const { data, pending: loading, error } = await useAsyncData<Inquiry | null>(
 // 제출 중 상태
 const pending = ref(false)
 
-// 폼 상태 초기값 (로드되면 아래 watchEffect로 치환)
+// 폼 상태 초기값
 const form = reactive<Inquiry>({
   id: routeId, center:'', type:'', source:'', title:'', content:'',
   answered:false, createdAt:'', files:[]
 })
 
+// A안: 선택 즉시 반영 + 롤백 스냅샷
+const MAX_FILES = 5
+const originalFiles = ref<FileMeta[]>([])
+
 watchEffect(() => {
-  if (data.value) Object.assign(form, data.value)
+  if (data.value) {
+    Object.assign(form, data.value)
+    originalFiles.value = JSON.parse(JSON.stringify(form.files || []))
+  }
 })
 
-// 파일 추가(메타만 저장)
 const fileInput = ref<HTMLInputElement|null>(null)
-const pickedFiles = ref<File[]>([])
+
+// ✅ 파일을 고르는 즉시 form.files에 메타로 합치기
 function onPickFiles (e: Event) {
   const target = e.target as HTMLInputElement
-  pickedFiles.value = Array.from(target.files || [])
-}
-function clearFiles () {
-  pickedFiles.value = []
+  const picked = Array.from(target.files || [])
+  const metas: FileMeta[] = picked.map(f => ({ name: f.name, size: f.size, type: f.type }))
+
+  const merged = [...(form.files || []), ...metas].slice(0, MAX_FILES)
+  form.files = merged
+
+  // 같은 파일 다시 선택 가능하도록 input 초기화
   if (fileInput.value) fileInput.value.value = ''
 }
+
+// 이번 세션 추가분 취소 → 원본으로 롤백
+function clearFiles () {
+  form.files = JSON.parse(JSON.stringify(originalFiles.value))
+  if (fileInput.value) fileInput.value.value = ''
+}
+
 function removeFile (i:number) {
   form.files?.splice(i, 1)
 }
@@ -171,7 +179,7 @@ const prettySize = (bytes:number) => {
   return `${(kb/1024).toFixed(1)} MB`
 }
 
-// 저장
+// 저장 (이미 form.files에 반영되어 있으므로 그대로 PATCH)
 async function onSubmit () {
   if (!form.center || !form.type || !form.title || !form.content) {
     alert('필수항목을 입력해 주세요.')
@@ -181,12 +189,6 @@ async function onSubmit () {
   pending.value = true
 
   try {
-    // 새로 고른 파일이 있으면 메타 추가
-    if (pickedFiles.value.length) {
-      const metas = pickedFiles.value.map(f => ({ name: f.name, size: f.size, type: f.type }))
-      form.files = [...(form.files || []), ...metas]
-    }
-
     await $fetch('/inquiries/' + apiId, {
       baseURL: apiBase,
       method: 'PATCH',
@@ -198,7 +200,6 @@ async function onSubmit () {
         content: form.content,
         answered: form.answered,
         files: form.files
-        // createdAt은 유지 (원하면 여기서 updatedAt 추가 가능)
       }
     })
 
