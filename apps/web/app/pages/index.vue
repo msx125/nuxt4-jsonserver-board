@@ -44,7 +44,11 @@
           <!-- 데이터 렌더 -->
           <tr v-else v-for="row in inquiries" :key="row.id">
             <td>{{ row.id }}</td>
-            <td>{{ row.title }}</td>
+            <td>
+              <NuxtLink :to="`/inquiries/${row.id}`">
+                {{ row.title }}
+              </NuxtLink>
+            </td>
             <td>{{ row.answered ? '답변완료' : '대기' }}</td>
             <td>{{ fmtDate(row.createdAt) }}</td>
             <td class="attach-cell">

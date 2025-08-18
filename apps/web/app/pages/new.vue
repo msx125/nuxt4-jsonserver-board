@@ -113,10 +113,10 @@ type InquiryCreate = {
 const router = useRouter()
 const { public: { apiBase } } = useRuntimeConfig()
 
-// ✅ 목록 페이지에서 useAsyncData에 사용한 "키"와 동일하게 맞추세요.
+// 뭐였지?
 const LIST_KEY = 'inquiries-list'
-// ✅ 목록 라우트 경로 (당신 프로젝트에 맞게 '/' 또는 '/inquiries' 둘 중 하나로)
-const LIST_ROUTE = '/'   // 목록이 루트라면 '/' 로 바꾸세요.
+// 목록 라우트 경로
+const LIST_ROUTE = '/'
 
 const form = reactive<InquiryCreate>({
   center: '',
@@ -125,7 +125,7 @@ const form = reactive<InquiryCreate>({
   title: '',
   content: '',
   answered: false,
-  createdAt: '',   // ↙ 제출 시 실제 시간으로 채움
+  createdAt: '',   // 제출 시 실제 시간으로 채움
   files: []
 })
 
