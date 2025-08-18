@@ -9,4 +9,10 @@ export default defineNuxtConfig({
       standalone: false,
     },
   },
+
+   runtimeConfig: {
+      public: {
+          apiBase: 'http://localhost:4000'
+      }
+   }
 })

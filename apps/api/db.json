@@ -1,10 +1,65 @@
 {
-  "posts": [
-    { "id": 1,
-      "title": "첫 글",
-      "answerStatus": "received",
-      "createdAt": "2025-08-14",
-      "attachments": [] }
-  ],
-  "comments": []
+  "inquiries": [
+    {
+      "id": "17ed",
+      "center": "자격관리센터",
+      "type": "일반",
+      "source": "웹",
+      "title": "Test",
+      "content": "test입니다.",
+      "answered": false,
+      "createdAt": "2025-08-18T01:29:27.066Z",
+      "files": []
+    },
+    {
+      "id": "a26c",
+      "center": "자격관리센터",
+      "type": "일반",
+      "source": "웹",
+      "title": "Test2",
+      "content": "Test2 입니다.",
+      "answered": false,
+      "createdAt": "2025-08-18T01:30:10.429Z",
+      "files": []
+    },
+    {
+      "id": "bf39",
+      "center": "자격관리센터",
+      "type": "일반",
+      "source": "웹",
+      "title": "test3",
+      "content": "test3 입니다.",
+      "answered": false,
+      "createdAt": "2025-08-18T01:33:02.471Z",
+      "files": []
+    },
+    {
+      "id": "19d6",
+      "center": "자격관리센터",
+      "type": "일반",
+      "source": "웹",
+      "title": "Test4",
+      "content": "test4 입니다.",
+      "answered": false,
+      "createdAt": "2025-08-18T01:33:57.636Z",
+      "files": []
+    },
+    {
+      "id": "cfae",
+      "center": "자격관리센터",
+      "type": "일반",
+      "source": "모바일",
+      "title": "Test5",
+      "content": "test5 입니다.",
+      "answered": false,
+      "createdAt": "2025-08-18T01:34:34.420Z",
+      "files": [
+        {
+          "name": "(화면설계서) 제22대 한국사회복지사협회장 선거 홈페이지 개발_v0.1.pptx",
+          "size": 6580177,
+          "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        }
+      ]
+    }
+  ]
 }
