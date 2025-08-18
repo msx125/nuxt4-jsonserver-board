@@ -32,7 +32,8 @@
         </div>
 
         <div class="toolbar">
-          <NuxtLink class="btn" to="/inquiries/${id}/edit">수정하기</NuxtLink>
+          <!-- 동적 바인딩으로 실제 id가 들어가도록 -->
+          <NuxtLink class="btn" :to="editHref">수정하기</NuxtLink>
           <NuxtLink class="btn" to="/">되돌아가기</NuxtLink>
         </div>
       </div>
@@ -41,6 +42,8 @@
 </template>
 
 <script setup lang="ts">
+import { createError } from 'h3'
+
 type FileMeta = { name:string; size:number; type:string }
 type Inquiry = {
   id: number | string
@@ -57,29 +60,27 @@ type Inquiry = {
 const route = useRoute()
 const { public:{ apiBase } } = useRuntimeConfig()
 
-// ✅ 파라미터 안전 처리 (숫자/문자 모두 허용)
+// ✅ 라우팅용 / API용 id 분리
 const raw = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
-const id = encodeURIComponent(String(raw ?? '').trim())
+const routeId = String(raw ?? '').trim()          // 라우팅에 그대로 사용
+const apiId   = encodeURIComponent(routeId)       // API 호출에 안전하게 사용
 
-// 잘못된 경로 방지
-if (!id) {
+if (!routeId) {
   throw createError({ statusCode: 404, statusMessage: '잘못된 경로입니다.' })
 }
 
-// 단건 조회
-const { data, pending, error } = await useAsyncData<Inquiry | null>(
-    `inquiry-detail-${id}`,
-    async () => {
-      try {
-        return await $fetch(`/inquiries/${id}`, { baseURL: apiBase })
-      } catch {
-        return null // 404 등일 때 null
-      }
-    }
+// ✅ 단건 조회 (에러는 error 분기로 노출되도록 catch 없이 던지게 둠)
+const { data, pending, error } = await useAsyncData<Inquiry>(
+    `inquiry-detail-${apiId}`,
+    () => $fetch('/inquiries/' + apiId, { baseURL: apiBase })
 )
 
-const inquiry = computed(() => data.value ?? null)
+const inquiry = computed(() => data.value)
 
+// ✅ 링크 계산
+const editHref = computed(() => '/inquiries/' + routeId + '/edit')
+
+// ✅ 표시용 유틸
 const fmtDate = (iso?: string) =>
     iso ? new Date(iso).toLocaleDateString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit' }) : ''
 

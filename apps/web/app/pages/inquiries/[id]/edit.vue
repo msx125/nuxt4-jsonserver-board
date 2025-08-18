@@ -64,7 +64,7 @@
         </div>
       </div>
 
-      <!-- (선택) 파일 메타 수정: 필요 없으면 이 블록 삭제 가능 -->
+      <!-- (선택) 파일 메타 수정 -->
       <div class="row">
         <div class="field grow">
           <label class="label">첨부파일(메타)</label>
@@ -95,6 +95,8 @@
 </template>
 
 <script setup lang="ts">
+import { createError } from 'h3'
+
 type FileMeta = { name:string; size:number; type:string }
 type Inquiry = {
   id: number | string
@@ -112,29 +114,33 @@ const route = useRoute()
 const router = useRouter()
 const { public:{ apiBase } } = useRuntimeConfig()
 
-// 안전한 id 추출
+// 라우팅용 / API용 id 분리
 const raw = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
-const id = encodeURIComponent(String(raw ?? '').trim())
-if (!id) throw createError({ statusCode: 404, statusMessage: '잘못된 경로' })
+const routeId = String(raw ?? '').trim()
+const apiId   = encodeURIComponent(routeId)
+if (!routeId) throw createError({ statusCode: 404, statusMessage: '잘못된 경로' })
 
-const detailHref = computed(() => `/inquiries/${id}`)
+// 상세 링크 (취소 시 복귀)
+const detailHref = computed(() => '/inquiries/' + routeId)
 
+// 기존 데이터 불러오기
 const { data, pending: loading, error } = await useAsyncData<Inquiry | null>(
-    `inquiry-detail-${id}`,
+    'inquiry-detail-' + apiId,
     async () => {
       try {
-        return await $fetch(`/inquiries/${id}`, { baseURL: apiBase })
+        return await $fetch('/inquiries/' + apiId, { baseURL: apiBase })
       } catch {
         return null
       }
     }
 )
 
+// 제출 중 상태
 const pending = ref(false)
 
-// 폼 상태: 기존 값을 불러와 채움
+// 폼 상태 초기값 (로드되면 아래 watchEffect로 치환)
 const form = reactive<Inquiry>({
-  id, center:'', type:'', source:'', title:'', content:'',
+  id: routeId, center:'', type:'', source:'', title:'', content:'',
   answered:false, createdAt:'', files:[]
 })
 
@@ -145,21 +151,19 @@ watchEffect(() => {
 // 파일 추가(메타만 저장)
 const fileInput = ref<HTMLInputElement|null>(null)
 const pickedFiles = ref<File[]>([])
-
 function onPickFiles (e: Event) {
   const target = e.target as HTMLInputElement
   pickedFiles.value = Array.from(target.files || [])
 }
-
 function clearFiles () {
   pickedFiles.value = []
   if (fileInput.value) fileInput.value.value = ''
 }
-
 function removeFile (i:number) {
   form.files?.splice(i, 1)
 }
 
+// 표시용
 const prettySize = (bytes:number) => {
   if (bytes < 1024) return `${bytes} B`
   const kb = bytes / 1024
@@ -167,6 +171,7 @@ const prettySize = (bytes:number) => {
   return `${(kb/1024).toFixed(1)} MB`
 }
 
+// 저장
 async function onSubmit () {
   if (!form.center || !form.type || !form.title || !form.content) {
     alert('필수항목을 입력해 주세요.')
@@ -176,14 +181,13 @@ async function onSubmit () {
   pending.value = true
 
   try {
-    // 새로 고른 파일이 있으면 기존 메타에 추가(또는 덮어쓰기 로직으로 바꿔도 됨)
+    // 새로 고른 파일이 있으면 메타 추가
     if (pickedFiles.value.length) {
       const metas = pickedFiles.value.map(f => ({ name: f.name, size: f.size, type: f.type }))
       form.files = [...(form.files || []), ...metas]
     }
 
-    // PATCH로 변경분 저장 (json-server는 PUT/PATCH 둘 다 지원)
-    await $fetch(`/inquiries/${id}`, {
+    await $fetch('/inquiries/' + apiId, {
       baseURL: apiBase,
       method: 'PATCH',
       body: {
@@ -194,18 +198,15 @@ async function onSubmit () {
         content: form.content,
         answered: form.answered,
         files: form.files
-        // createdAt은 그대로 두고 싶어 PATCH 바디에 넣지 않음
-        // updatedAt을 쓰고 싶으면 여기에 new Date().toISOString() 추가
+        // createdAt은 유지 (원하면 여기서 updatedAt 추가 가능)
       }
     })
 
-    // 목록/상세 캐시 무효화 → 돌아갔을 때 최신 표시
     await Promise.all([
       refreshNuxtData('inquiries-list'),
-      refreshNuxtData(`inquiry-detail-${id}`)
+      refreshNuxtData('inquiry-detail-' + apiId)
     ])
 
-    // 상세로 복귀
     await router.replace(detailHref.value)
   } catch (err:any) {
     alert('저장 실패: ' + (err?.message || err))
@@ -216,7 +217,6 @@ async function onSubmit () {
 </script>
 
 <style scoped>
-/* new.vue의 스타일을 그대로 재사용하거나 필요한 최소만 붙였습니다 */
 .page { padding:16px 0 32px; }
 .page-title { font-size:20px; font-weight:800; margin:0 0 14px; }
 .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:18px; }

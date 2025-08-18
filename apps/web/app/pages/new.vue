@@ -98,7 +98,6 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-
 type InquiryCreate = {
   center: string
   type: string
@@ -109,15 +108,12 @@ type InquiryCreate = {
   createdAt: string
   files: Array<{ name: string; size: number; type: string }>
 }
-
 const router = useRouter()
 const { public: { apiBase } } = useRuntimeConfig()
-
 // 뭐였지?
 const LIST_KEY = 'inquiries-list'
 // 목록 라우트 경로
 const LIST_ROUTE = '/'
-
 const form = reactive<InquiryCreate>({
   center: '',
   type: '',
@@ -128,65 +124,52 @@ const form = reactive<InquiryCreate>({
   createdAt: '',   // 제출 시 실제 시간으로 채움
   files: []
 })
-
 const files = ref<File[]>([])
 const fileInput = ref<HTMLInputElement | null>(null)
 const pending = ref(false)
-
 const MAX_FILES = 5
-
 function onPickFiles (e: Event) {
   const target = e.target as HTMLInputElement
   const picked = Array.from(target.files || [])
   const merged = [...files.value, ...picked].slice(0, MAX_FILES)
   files.value = merged
 }
-
 function removeFile (i: number) {
   files.value.splice(i, 1)
 }
-
 function clearFiles () {
   files.value = []
   if (fileInput.value) fileInput.value.value = ''
 }
-
 function prettySize (bytes: number) {
   if (bytes < 1024) return `${bytes} B`
   const kb = bytes / 1024
   if (kb < 1024) return `${kb.toFixed(1)} KB`
   return `${(kb / 1024).toFixed(1)} MB`
 }
-
 async function onSubmit () {
   // 1) 간단 검증
   if (!form.center || !form.type || !form.title || !form.content) {
     alert('필수항목을 입력해 주세요.')
     return
   }
-
   // 2) 중복 클릭 방지
   if (pending.value) return
   pending.value = true
-
   try {
     // 3) 파일은 메타데이터만 저장(json-server는 실제 업로드 불가)
     form.files = files.value.map(f => ({ name: f.name, size: f.size, type: f.type }))
-
     // 4) 등록 시각은 제출 시점으로 세팅
     form.createdAt = new Date().toISOString()
-
     // 5) db.json에 저장 (id 자동 부여)
-    const saved = await $fetch(`${apiBase}/inquiries`, {
+    const saved = await $fetch(`/inquiries`, {
       baseURL: apiBase,
       method: 'POST',
       body: form
     })
     // console.log(saved) // { id: 1, center:..., ... }
-
     // 6) 목록 캐시 무효화 → 다음 진입 시 최신 데이터 보이게
     await refreshNuxtData(LIST_KEY)
-
     // 7) 목록으로 이동
     await router.replace(LIST_ROUTE)
   } catch (err: any) {
@@ -195,7 +178,6 @@ async function onSubmit () {
     pending.value = false
   }
 }
-
 function onCancel () {
   router.back() // 또는 router.replace(LIST_ROUTE)
 }
@@ -205,21 +187,17 @@ function onCancel () {
 <style scoped>
 .page { padding: 16px 0 32px; }
 .page-title { font-size: 20px; font-weight: 800; margin: 0 0 14px; }
-
 .card {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 18px;
 }
-
 .row { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
 .field { display: flex; flex-direction: column; min-width: 220px; }
 .field.grow { flex: 1 1 480px; }
-
 .label { font-size: 13px; color: #374151; margin-bottom: 6px; }
 .label.required::after { content: " *"; color: #ef4444; }
-
 .input, .select, .textarea {
   width: 100%;
   border: 1px solid #d1d5db;
@@ -229,11 +207,8 @@ function onCancel () {
   outline: none;
 }
 .input:focus, .select:focus, .textarea:focus { border-color: #2955d1; box-shadow: 0 0 0 3px rgba(41,85,209,0.12); }
-
 .textarea { resize: vertical; }
-
 .hint { margin-top: 6px; font-size: 12px; color: #6b7280; }
-
 .upload { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
 .file { display: none; }
 .file-list { list-style: none; padding: 0; margin: 0; }
@@ -242,9 +217,7 @@ function onCancel () {
 .file-item .name { flex: 1 1 auto; }
 .file-item .meta { font-size: 12px; color: #6b7280; }
 .empty-file { font-size: 13px; color: #9ca3af; }
-
 .toolbar { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
-
 .btn {
   appearance: none;
   border: 1px solid #d1d5db;
@@ -259,7 +232,6 @@ function onCancel () {
 .btn.primary:disabled { opacity: .6; cursor: default; }
 .btn.ghost { background: #fff; }
 .btn .link, .link { background: none; border: 0; color: #2955d1; cursor: pointer; }
-
 @media (max-width: 640px) {
   .field { min-width: 100%; }
 }

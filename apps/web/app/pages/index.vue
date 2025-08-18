@@ -80,11 +80,9 @@ type Inquiry = {
   files?: FileMeta[]
   answered: boolean
   createdAt: string
-  // (선택) 탭 카테고리 필드가 있다면 여기에 추가하세요: category?: string
+
 }
-
 const { public: { apiBase } } = useRuntimeConfig()
-
 // 목록 로드 (최신 id 순)
 const { data, pending, error, refresh } = await useAsyncData<Inquiry[]>(
     'inquiries-list',
@@ -93,12 +91,9 @@ const { data, pending, error, refresh } = await useAsyncData<Inquiry[]>(
       query: { _sort: 'id', _order: 'desc' }
     })
 )
-
 const inquiries = computed(() => data.value ?? [])
 const fmtDate = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '')
-
 const writeNew = () => navigateTo('/new')
-
 // (선택) 탭 카운트용 간단 집계
 const counts = computed<Record<string, number>>(() => {
   const c: Record<string, number> = {}
@@ -121,11 +116,9 @@ const counts = computed<Record<string, number>>(() => {
 }
 .card-head { padding: 20px 20px 8px; border-bottom: 1px solid #f3f4f6; }
 .card-head h1 { margin: 0 0 12px; font-size: 20px; font-weight: 800; color: #111827; }
-
 .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
 .tab { border: 1px solid #e5e7eb; background: #fff; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: #374151; }
 .tab.active { background: #2955d1; border-color: #2955d1; color: #fff; }
-
 .card-body { padding: 20px; }
 .table-wrap { overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 10px; }
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -134,11 +127,8 @@ const counts = computed<Record<string, number>>(() => {
 .table tbody tr:last-child td { border-bottom: 0; }
 .table .empty td { text-align: center; color: #6b7280; }
 .attach-cell { text-align: center; }
-
 .toolbar { margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; }
-
 .btn { appearance: none; border: 1px solid #d1d5db; background: #fff; padding: 10px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; }
 .btn.primary { border-color: #2955d1; background: #2955d1; color: #fff; }
-
 @media (max-width: 480px) { .card-head h1 { font-size: 18px; } }
 </style>
