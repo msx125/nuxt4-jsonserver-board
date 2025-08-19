@@ -139,16 +139,20 @@ const form = reactive<Inquiry>({
 const MAX_FILES = 5
 const originalFiles = ref<FileMeta[]>([])
 
-watchEffect(() => {
-  if (data.value) {
-    Object.assign(form, data.value)
-    originalFiles.value = JSON.parse(JSON.stringify(form.files || []))
-  }
-})
+watch(
+    () => data.value,
+    (val) => {
+      if (!val) return
+      Object.assign(form, val)
+      // 서버에서 내려준 원본만 스냅샷
+      originalFiles.value = JSON.parse(JSON.stringify(val.files || []))
+    },
+    { immediate: true }
+)
 
 const fileInput = ref<HTMLInputElement|null>(null)
 
-// ✅ 파일을 고르는 즉시 form.files에 메타로 합치기
+// 파일을 고르는 즉시 form.files에 메타로 합치기
 function onPickFiles (e: Event) {
   const target = e.target as HTMLInputElement
   const picked = Array.from(target.files || [])

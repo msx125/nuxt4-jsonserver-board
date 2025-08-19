@@ -13,11 +13,11 @@
     },
     {
       "id": "71f4",
-      "center": "아이디벨 센터",
-      "type": "이의신청",
-      "source": "모바일",
-      "title": "2번째 글 테스트",
-      "content": "2번째 글 테스트",
+      "center": "현장실습센터",
+      "type": "일반",
+      "source": "전화",
+      "title": "2번째 글 테스트 파일첨부 수정",
+      "content": "2번째 글 테스트 파일 첨부",
       "answered": false,
       "createdAt": "2025-08-19T02:06:39.022Z",
       "files": []
@@ -46,14 +46,25 @@
     },
     {
       "id": "1a73",
-      "center": "하남시 센터",
-      "type": "일반",
-      "source": "전화",
+      "center": "자격관리센터",
+      "type": "이의신청",
+      "source": "웹",
       "title": "5번째 글 테스트",
       "content": "5번째 글 테스트",
       "answered": false,
       "createdAt": "2025-08-19T02:07:08.899Z",
-      "files": []
+      "files": [
+        {
+          "name": "(화면설계서) 제22대 한국사회복지사협회장 선거 홈페이지 개발_v0.1.pptx",
+          "size": 6580177,
+          "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        },
+        {
+          "name": "화면 캡처 2025-08-18 142117.png",
+          "size": 65248,
+          "type": "image/png"
+        }
+      ]
     },
     {
       "id": "72d6",
@@ -123,11 +134,11 @@
     },
     {
       "id": "07ca",
-      "center": "아이디벨 센터",
+      "center": "자격관리센터",
       "type": "이의신청",
-      "source": "전화",
+      "source": "웹",
       "title": "12번째 글 테스트",
-      "content": "12번째 글 테스트",
+      "content": "12번째 글 테스트 수정",
       "answered": false,
       "createdAt": "2025-08-19T02:09:20.758Z",
       "files": []
@@ -200,11 +211,11 @@
     },
     {
       "id": "1e0f",
-      "center": "아이디벨 센터",
-      "type": "이의신청",
+      "center": "자격관리센터",
+      "type": "일반",
       "source": "모바일",
       "title": "ㅇㅁㄴㄻㄴㅇㄹ",
-      "content": "ㅇㄴㅁㄹㅇㅁㄴㄹㅇㄴㅁ",
+      "content": "ㅇㄴㅁㄹㅇㅁㄴㄹㅇㄴㅁㄴㅇㄹㄴㅇㄹㄴㅇ",
       "answered": false,
       "createdAt": "2025-08-19T03:38:09.963Z",
       "files": []
