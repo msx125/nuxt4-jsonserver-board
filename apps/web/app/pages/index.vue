@@ -62,8 +62,36 @@
         </table>
       </div>
 
+      <!-- 페이지네이션 -->
+      <nav class="pagination" v-if="totalPages > 1 || total === 0">
+        <button
+            class="page-btn"
+            :disabled="page === 1"
+            @click="page = Math.max(1, page - 1)"
+        >
+          이전
+        </button>
+
+        <button
+            v-for="p in pages"
+            :key="p"
+            class="page-btn"
+            :class="{ active: p === page }"
+            @click="page = p"
+        >
+          {{ p }}
+        </button>
+
+        <button
+            class="page-btn"
+            :disabled="page === totalPages"
+            @click="page = Math.min(totalPages, page + 1)"
+        >
+          다음
+        </button>
+      </nav>
+
       <div class="toolbar">
-        <button class="btn" @click="refresh">새로고침</button>
         <button class="btn primary" @click="writeNew">1:1 문의 작성</button>
       </div>
     </div>
@@ -85,39 +113,91 @@ type Inquiry = {
   createdAt: string
 }
 
+const page = ref(1)
+const pageSize = 10
+
+// 전체 건수
+const total = ref(0)
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+const pages = computed(() => Array.from({ length: totalPages.value }, (_, i) => i + 1))
+
 const { public: { apiBase } } = useRuntimeConfig()
 
-// useAsyncData, 비동기로 데이터 접근해서 불러올때 사용하는 내장 composable
+// ⬇ 변경 1) useAsyncData 키를 고정, page 감시 제거
+// ⬇ 변경 2) 서버에서 전체를 한 번에 가져오고(_page/_limit 제거), 헤더 대신 길이로 total 계산
 const LIST_KEY = 'inquiries-list'
 const { data, pending, error, refresh } = await useAsyncData<Inquiry[]>(
     LIST_KEY,
-    () => $fetch('/inquiries', {
-      baseURL: apiBase,
-      query: { _sort: 'id', _order: 'desc' }
-    })
+    async () => {
+      const list = await $fetch<Inquiry[]>('/inquiries', {
+        baseURL: apiBase,
+        query: {
+          _sort: 'id',
+          _order: 'desc',
+        },
+      })
+      total.value = list.length
+      return list
+    }
+    // { server: true } // 기본값이라 생략 가능
 )
 
-const inquiries = computed(() => data.value ?? [])
+// ⬇ 변경 3) 현재 페이지에 보여줄 10개만 자르기
+const inquiries = computed(() => {
+  const list = data.value ?? []
+  const start = (page.value - 1) * pageSize
+  return list.slice(start, start + pageSize)
+})
 
 const fmtDate = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '')
-
 const writeNew = () => navigateTo('/new')
 
-// (선택) 탭 카운트용 간단 집계
+// (선택) 탭 카운트: 현재 페이지 기준 그대로 두려면 inquiries 사용, 전체 기준이면 data로 변경
 const counts = computed<Record<string, number>>(() => {
+  const base = inquiries.value // 전체 기준으로 집계하려면 data.value 로 바꾸세요
   const c: Record<string, number> = {}
-  for (const row of inquiries.value) {
-    // 분류 기준을 정하세요: row.category 가 있다면 그걸 사용
-    // 없으면 임시로 문의 유형(type)으로 집계
+  for (const row of base) {
     const key = (row as any).category || row.type || '기타'
     c[key] = (c[key] || 0) + 1
   }
   return c
 })
-
 </script>
 
+
+
+
 <style scoped>
+/* 페이지 네이션*/
+.pagination {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.page-btn {
+  min-width: 34px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.page-btn.active {
+  background: #2955d1;
+  color: #fff;
+  border-color: #2955d1;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .card {
   background: #fff;
   border: 1px solid #e5e7eb;
