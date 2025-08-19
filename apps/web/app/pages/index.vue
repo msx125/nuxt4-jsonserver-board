@@ -16,6 +16,24 @@
     </div>
 
     <div class="card-body">
+
+      <div class="table-tools">
+        <div class="searchbar">
+          <select v-model="searchField" class="select">
+            <option value="title">제목</option>
+          </select>
+          <input
+              v-model.trim="keyword"
+              type="text"
+              placeholder="검색어를 입력하세요"
+              @keydown.enter.prevent="page = 1"
+              class="input"
+          />
+          <button class="btn" @click="page = 1">검색</button>
+          <button class="btn" v-if="keyword" @click="keyword = ''">초기화</button>
+        </div>
+      </div>
+
       <div class="table-wrap">
         <table class="table">
           <colgroup>
@@ -139,12 +157,11 @@ const { data, pending, error, refresh } = await useAsyncData<Inquiry[]>(
       total.value = list.length
       return list
     }
-    // { server: true } // 기본값이라 생략 가능
 )
 
 // ⬇ 변경 3) 현재 페이지에 보여줄 10개만 자르기
 const inquiries = computed(() => {
-  const list = data.value ?? []
+  const list = filtered.value
   const start = (page.value - 1) * pageSize
   return list.slice(start, start + pageSize)
 })
@@ -162,10 +179,35 @@ const counts = computed<Record<string, number>>(() => {
   }
   return c
 })
+
+
+
+// 검색 관련
+// 검색 상태
+const searchField = ref<'title'>('title')
+const keyword = ref('')
+
+// 문자열 정규화(대소문자 무시/공백 트림)
+const norm = (s?: string) => (s ?? '').toLowerCase().trim()
+
+// 필터(전체 data → 검색 필터)
+const filtered = computed(() => {
+  const list = (data.value ?? [])
+  const q = norm(keyword.value)
+  if (!q) return list
+  // 현재는 '제목'만: 향후 다른 항목 추가 시 switch-case 확장
+  return list.filter(row => norm(row.title).includes(q))
+})
+
+// 검색어가 바뀌면 1페이지로 이동
+watch(keyword, () => { page.value = 1 })
+
+// total은 필터 결과 길이를 따르게(기존 ref 그대로 활용)
+watch(filtered, (list) => {
+  total.value = list.length
+}, { immediate: true })
+
 </script>
-
-
-
 
 <style scoped>
 /* 페이지 네이션*/
@@ -197,6 +239,41 @@ const counts = computed<Record<string, number>>(() => {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.searchbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.searchbar.right {
+  width: max-content;   /* 내용만큼만 너비 */
+  margin-left: auto;    /* 오른쪽으로 붙이기 */
+  margin-bottom: 12px;  /* 테이블과 간격 */
+}
+
+.input {
+  height: 36px;
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+.select {
+  height: 36px;
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.table-tools {
+  display: flex;
+  justify-content: flex-end; /* → 오른쪽 붙이기 */
+  margin-bottom: 12px;       /* 테이블과 간격 */
+}
+.table-tools .searchbar { margin: 0; } /* 기존 .searchbar margin 상쇄 */
+
 
 .card {
   background: #fff;
