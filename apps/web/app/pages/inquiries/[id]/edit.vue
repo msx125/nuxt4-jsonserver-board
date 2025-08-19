@@ -10,9 +10,9 @@
           <label class="label required">문의 센터</label>
           <select v-model="form.center" class="select" required>
             <option value="" disabled>선택</option>
-            <option value="자격관리센터">자격관리센터</option>
-            <option value="현장실습센터">현장실습센터</option>
-            <option value="보수교육센터">보수교육센터</option>
+            <option value="아이디벨 센터">아이디벨 센터</option>
+            <option value="하남시 센터">하남시 센터</option>
+            <option value="보수교육센터">강변 SK V1 센터</option>
           </select>
         </div>
 

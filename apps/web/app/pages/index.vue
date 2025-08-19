@@ -4,24 +4,18 @@
 
     <div class="card-head">
       <h1>1:1 문의 내역</h1>
-
-      <!-- 탭: 간단 집계(선택) -->
-      <div class="tabs">
-        <button class="tab active">자격관련 ({{ counts['자격관련'] || 0 }})</button>
-        <button class="tab">영역자격 ({{ counts['영역자격'] || 0 }})</button>
-        <button class="tab">현장실습 ({{ counts['현장실습'] || 0 }})</button>
-        <button class="tab">보수교육 ({{ counts['보수교육'] || 0 }})</button>
-        <button class="tab">기타 ({{ counts['기타'] || 0 }})</button>
-      </div>
     </div>
 
     <div class="card-body">
 
+      <!-- 검색창-->
       <div class="table-tools">
         <div class="searchbar">
+
           <select v-model="searchField" class="select">
             <option value="title">제목</option>
           </select>
+
           <input
               v-model.trim="keyword"
               type="text"
@@ -29,9 +23,11 @@
               @keydown.enter.prevent="page = 1"
               class="input"
           />
+
           <button class="btn" @click="page = 1">검색</button>
           <button class="btn" v-if="keyword" @click="keyword = ''">초기화</button>
         </div>
+
       </div>
 
       <div class="table-wrap">
@@ -290,7 +286,7 @@ watch(filtered, (list) => {
 .table-wrap { overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 10px; }
 .table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .table thead th { background: #f9fafb; color: #374151; text-align: left; padding: 12px 14px; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
-.table tbody td { padding: 14px; border-bottom: 1px solid #f3f4f6; color: #111827; }
+.table tbody td { padding: 14px; border-bottom: 1px solid #f3f4f6; color: #111827; text-align: center;}
 .table tbody tr:last-child td { border-bottom: 0; }
 .table .empty td { text-align: center; color: #6b7280; }
 .table thead th {text-align: center;}

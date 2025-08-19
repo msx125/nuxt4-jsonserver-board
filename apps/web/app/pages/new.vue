@@ -76,13 +76,16 @@
         <button type="submit" class="btn primary" :disabled="pending">제출</button>
       </div>
     </form>
+
+    <ConfirmDialog group="inquiryNew" class="confirm-inquiry-new" />
   </section>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import ConfirmDialog from 'primevue/confirmdialog'
 
-// DB 정의
+// 데이터 타입 정의
 type InquiryCreate = {
   center: string
   type: string
@@ -94,22 +97,7 @@ type InquiryCreate = {
   files: Array<{ name: string; size: number; type: string }>
 }
 
-// 페이지 라우팅(이동) 훅
-const router = useRouter()
-
-// 알럿 및 모달 훅 - 이거 전부 다 사용되니까 컴포넌트로 빼야하나?
-const confirm = useConfirm()
-const toast = useToast()
-
-// 하드코딩 안하고 nuxt.config.ts에 기재
-const { public: { apiBase } } = useRuntimeConfig()
-
-// 하드코딩된 문자열 최대한 모아두기... -> 나중에 별도 폴더로 빼기. 공식문서 디렉토리 구조에 명시된 권장 내용은 없음
-const LIST_KEY = 'inquiries-list'
-const LIST_ROUTE = '/'
-
-// 데이터 담아둘 객체 & 객체를 반응형으로 추적 & 데이터 타입 지정
-// template 태그 내 v-model 로 연결할 것
+// InquiryCreate 타입 구조를 가진 객체 저장
 const form = reactive<InquiryCreate>({
   center: '',
   type: '',
@@ -121,37 +109,46 @@ const form = reactive<InquiryCreate>({
   files: []
 })
 
+// 페이지 라우팅(이동) 훅
+const router = useRouter()
+// 알럿 및 모달 훅
+const confirm = useConfirm()
+const toast = useToast()
 
-// TypeScript 로 파일만 배열로 받아서 반응형으로 추적
+// 기타 설정
+const { public: { apiBase } } = useRuntimeConfig()
+const LIST_KEY = 'inquiries-list'
+const LIST_ROUTE = '/'
+
+// 반응형 상태 모음
 const files = ref<File[]>([])
-
-// <input type="file"> DOM 요소 수정
 const fileInput = ref<HTMLInputElement | null>(null)
-
-// 임의로 만든 상태 대기
 const pending = ref(false)
 
-// 변수 나중에 어떻게 모을지 고민하기
+// 필요한 변수
 const MAX_FILES = 5
 
+// 함수 모음
+// - 파일 첨부
 function onPickFiles (e: Event) {
   const target = e.target as HTMLInputElement
-  // 파일들 진짜 배열로 전환
   const picked = Array.from(target.files || [])
   const merged = [...files.value, ...picked].slice(0, MAX_FILES)
   files.value = merged
   if (fileInput.value) fileInput.value.value = ''
 }
 
+// - 파일 삭제
 function removeFile (i: number) {
   files.value.splice(i, 1)
 }
 
+// - 파일 취소
 function clearFiles () {
   files.value = []
   if (fileInput.value) fileInput.value.value = ''
 }
-
+// - 파일 크기 표시
 function prettySize (bytes: number) {
   if (bytes < 1024) return `${bytes} B`
   const kb = bytes / 1024
@@ -159,6 +156,7 @@ function prettySize (bytes: number) {
   return `${(kb / 1024).toFixed(1)} MB`
 }
 
+// - 폼 제출 fetch
 async function onSubmit () {
   if (!form.center || !form.type || !form.title || !form.content) {
     toast.add({ severity: 'warn', summary: '확인', detail: '필수 항목을 입력해주세요.', life: 2000 })
@@ -183,8 +181,10 @@ async function onSubmit () {
   }
 }
 
+// - 작성 취소 함수
 function onCancel () {
   confirm.require({
+    group: 'inquiryNew',  // ⬅ 추가: 이 페이지 전용 인스턴스로 띄우기
     header: '작성 취소',
     message: '작성 중인 내용이 사라집니다. 취소하시겠습니까?',
     icon: 'pi pi-exclamation-triangle',
@@ -200,6 +200,79 @@ function onCancel () {
 </script>
 
 <style scoped>
+
+/* 이 페이지 전용 ConfirmDialog 스타일 */
+:deep(.confirm-inquiry-new.p-confirm-dialog) {
+  /* 다이얼로그 박스 */
+  border-radius: 14px;
+  overflow: hidden; /* 둥근 모서리로 마스크 */
+}
+
+/* 헤더 */
+:deep(.confirm-inquiry-new .p-dialog-header) {
+  background: #f8fafc;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+:deep(.confirm-inquiry-new .p-dialog-title) {
+  font-weight: 800;
+  font-size: 16px;
+  color: #111827;
+}
+
+/* 본문(아이콘+메시지 줄맞춤 개선) */
+:deep(.confirm-inquiry-new .p-confirm-dialog-content) {
+  padding: 18px;
+}
+:deep(.confirm-inquiry-new .p-confirm-dialog-message) {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.55;
+}
+
+/* 아이콘 톤(경고) */
+:deep(.confirm-inquiry-new .p-confirm-dialog-icon) {
+  margin-right: 8px;
+  font-size: 18px;
+  color: #f59e0b; /* 경고 노랑 */
+}
+
+/* 푸터 버튼 영역 */
+:deep(.confirm-inquiry-new .p-dialog-footer) {
+  padding: 12px 18px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* 기본 버튼 톤앤매너(파랑) */
+:deep(.confirm-inquiry-new .p-button) {
+  border-radius: 10px;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+
+/* 거절(계속 작성) 버튼: 윤곽형 */
+:deep(.confirm-inquiry-new .p-button:not(.p-button-danger)) {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  color: #111827;
+}
+
+/* 수락(취소하기) 버튼: 경고/위험 */
+:deep(.confirm-inquiry-new .p-button-danger) {
+  background: #ef4444;
+  border: none;
+}
+
+/* 반응형 width */
+:deep(.confirm-inquiry-new .p-dialog) {
+  width: 92vw;
+  max-width: 420px; /* PC에서 보기 좋은 너비 */
+}
+
+
 .page { padding: 16px 0 32px; }
 .page-title { font-size: 20px; font-weight: 800; margin: 0 0 14px; }
 .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:18px; }
