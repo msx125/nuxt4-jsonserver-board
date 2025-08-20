@@ -114,6 +114,9 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, onMounted } from 'vue'
+const { public: { apiBase } } = useRuntimeConfig()
+
 type FileMeta = { name: string; size: number; type: string }
 type Inquiry = {
   id: number
@@ -135,23 +138,21 @@ const total = ref(0)
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const pages = computed(() => Array.from({ length: totalPages.value }, (_, i) => i + 1))
 
-const { public: { apiBase } } = useRuntimeConfig()
 
-// ⬇ 변경 1) useAsyncData 키를 고정, page 감시 제거
-// ⬇ 변경 2) 서버에서 전체를 한 번에 가져오고(_page/_limit 제거), 헤더 대신 길이로 total 계산
+// 전체 데이터 가져오기
 const LIST_KEY = 'inquiries-list'
 const { data, pending, error, refresh } = await useAsyncData<Inquiry[]>(
     LIST_KEY,
     async () => {
-      const list = await $fetch<Inquiry[]>('/inquiries', {
+      const listDataValue = await $fetch<Inquiry[]>('/inquiries', {
         baseURL: apiBase,
         query: {
           _sort: 'id',
           _order: 'desc',
         },
       })
-      total.value = list.length
-      return list
+      total.value = listDataValue.length
+      return listDataValue
     }
 )
 
@@ -160,6 +161,15 @@ const inquiries = computed(() => {
   const list = filtered.value
   const start = (page.value - 1) * pageSize
   return list.slice(start, start + pageSize)
+})
+
+onMounted(() => {
+  const saved = localStorage.getItem('inquiriesState')
+  if (saved) {
+    const { page: p, keyword: k } = JSON.parse(saved)
+    if (p) page.value = p
+    if (k) keyword.value = k
+  }
 })
 
 const fmtDate = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '')
@@ -175,8 +185,6 @@ const counts = computed<Record<string, number>>(() => {
   }
   return c
 })
-
-
 
 // 검색 관련
 // 검색 상태
@@ -197,6 +205,10 @@ const filtered = computed(() => {
 
 // 검색어가 바뀌면 1페이지로 이동
 watch(keyword, () => { page.value = 1 })
+
+watch([page, keyword], ([p, k]) => {
+  localStorage.setItem('inquiriesState', JSON.stringify({ page: p, keyword: k }))
+})
 
 // total은 필터 결과 길이를 따르게(기존 ref 그대로 활용)
 watch(filtered, (list) => {

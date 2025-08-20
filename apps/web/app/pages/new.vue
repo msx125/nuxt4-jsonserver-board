@@ -168,9 +168,10 @@ async function onSubmit () {
     form.files = files.value.map(f => ({ name: f.name, size: f.size, type: f.type }))
     form.createdAt = new Date().toISOString()
 
+    // POST 해서 db.json
     const saved = await $fetch(`/inquiries`, { baseURL: apiBase, method: 'POST', body: form })
-    // saved.id 등 필요시 사용
 
+    // 캐시 초기화
     await refreshNuxtData(LIST_KEY)
     toast.add({ severity: 'success', summary: '저장 완료', detail: '정상적으로 등록되었습니다.', life: 1800 })
     await router.replace(LIST_ROUTE)
