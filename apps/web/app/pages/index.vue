@@ -6,6 +6,12 @@
       <h1>1:1 문의 내역</h1>
     </div>
 
+    <div class="auth">
+      <span v-if="isLoggedIn" class="badge">로그인됨</span>
+      <button v-if="!isLoggedIn" class="btn" @click="mockLogin">로그인</button>
+      <button v-else class="btn" @click="mockLogout">로그아웃</button>
+    </div>
+
     <div class="card-body">
 
       <!-- 검색창-->
@@ -51,7 +57,7 @@
           <tbody>
 
           <!-- 로딩/에러/빈 상태 -->
-          <tr v-if="pending"><td colspan="5">불러오는 중…</td></tr>
+          <tr v-if="pendingTemp"><td colspan="5">불러오는 중…</td></tr>
           <tr v-else-if="error"><td colspan="5">목록을 불러오지 못했습니다.</td></tr>
           <tr v-else-if="!inquiries?.length" class="empty">
             <td colspan="5">등록된 문의가 없습니다.</td>
@@ -106,7 +112,14 @@
       </nav>
 
       <div class="toolbar">
-        <button class="btn primary" @click="writeNew">1:1 문의 작성</button>
+        <button
+            class="btn primary"
+            :disabled="!isLoggedIn"
+            title="로그인이 필요합니다"
+            @click="writeNew"
+        >
+          1:1 문의 작성
+        </button>
       </div>
     </div>
 
@@ -129,6 +142,7 @@ type Inquiry = {
   answered: boolean
   createdAt: string
 }
+const pendingTemp = ref(false)
 
 const page = ref(1)
 const pageSize = 10
@@ -173,7 +187,34 @@ onMounted(() => {
 })
 
 const fmtDate = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '')
-const writeNew = () => navigateTo('/new')
+
+// 임시 로그인 키
+const AUTH_KEY = 'mockAuthToken'
+const isLoggedIn = ref(false)
+
+// 브라우저에서만 읽기
+onMounted(() => {
+  isLoggedIn.value = !!localStorage.getItem(AUTH_KEY)
+})
+
+function mockLogin () {
+  localStorage.setItem(AUTH_KEY, '1')
+  isLoggedIn.value = true
+}
+
+function mockLogout () {
+  localStorage.removeItem(AUTH_KEY)
+  isLoggedIn.value = false
+}
+
+// 작성 버튼 보호 로직
+const writeNew = () => {
+  if (!isLoggedIn.value) {
+    alert('로그인이 필요합니다. 우측 상단 [로그인] 버튼을 눌러주세요.')
+    return
+  }
+  navigateTo('/new')
+}
 
 // (선택) 탭 카운트: 현재 페이지 기준 그대로 두려면 inquiries 사용, 전체 기준이면 data로 변경
 const counts = computed<Record<string, number>>(() => {
@@ -214,6 +255,9 @@ watch([page, keyword], ([p, k]) => {
 watch(filtered, (list) => {
   total.value = list.length
 }, { immediate: true })
+
+
+
 
 </script>
 

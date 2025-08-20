@@ -135,7 +135,7 @@ const form = reactive<Inquiry>({
   answered:false, createdAt:'', files:[]
 })
 
-// A안: 선택 즉시 반영 + 롤백 스냅샷
+// 선택 즉시 반영 + 롤백 스냅샷
 const MAX_FILES = 5
 const originalFiles = ref<FileMeta[]>([])
 

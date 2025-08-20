@@ -60,7 +60,7 @@ const confirm = useConfirm()
 const toast = useToast()
 const { public:{ apiBase } } = useRuntimeConfig()
 
-// ✅ 목록 경로/키 (프로젝트에 맞게 경로를 '/' 또는 '/inquiries'로 조정)
+// 목록 경로/키 (프로젝트에 맞게 경로를 '/' 또는 '/inquiries'로 조정)
 const LIST_KEY = 'inquiries-list'
 const LIST_ROUTE = '/'
 
