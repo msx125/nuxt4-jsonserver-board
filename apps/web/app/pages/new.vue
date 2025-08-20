@@ -2,6 +2,7 @@
   <section class="page">
     <h1 class="page-title">1:1 문의 등록</h1>
 
+    <!-- 👇 이벤트 핸들러를 onSubmit으로 변경 -->
     <form class="card" @submit.prevent="onSubmit">
       <div class="row">
         <div class="field">
@@ -38,7 +39,6 @@
       <div class="row">
         <div class="field grow">
           <label class="label required">제목</label>
-          <!-- .trim 양쪽 공백 자르기 -->
           <input v-model.trim="form.title" type="text" class="input" placeholder="제목을 입력하세요" required />
         </div>
       </div>
@@ -77,7 +77,9 @@
       </div>
     </form>
 
+    <!-- 👇 두 개의 ConfirmDialog 인스턴스 필요 -->
     <ConfirmDialog group="inquiryNew" class="confirm-inquiry-new" />
+    <ConfirmDialog group="inquirySubmit" class="confirm-inquiry-submit" />
   </section>
 </template>
 
@@ -148,6 +150,7 @@ function clearFiles () {
   files.value = []
   if (fileInput.value) fileInput.value.value = ''
 }
+
 // - 파일 크기 표시
 function prettySize (bytes: number) {
   if (bytes < 1024) return `${bytes} B`
@@ -156,36 +159,70 @@ function prettySize (bytes: number) {
   return `${(kb / 1024).toFixed(1)} MB`
 }
 
-// - 폼 제출 fetch
-async function onSubmit () {
+// 제출시 컨펌 모달
+function onSubmit () {
+  // 👇 먼저 필수 필드 검증
   if (!form.center || !form.type || !form.title || !form.content) {
     toast.add({ severity: 'warn', summary: '확인', detail: '필수 항목을 입력해주세요.', life: 2000 })
     return
   }
-  if (pending.value) return
+
+  // 👇 검증 통과 후 콘펌 모달 표시
+  confirm.require({
+    group: 'inquirySubmit',
+    header: '문의 제출',
+    message: '문의를 제출하시겠습니까?',
+    icon: 'pi pi-question-circle',
+    rejectLabel: '취소',
+    acceptLabel: '제출',
+    acceptClass: 'p-button-primary',
+    async accept() {
+      await submitInquiry()
+    }
+  })
+}
+
+// - 폼 제출 fetch 함수
+async function submitInquiry () {
+  console.log('=== submitInquiry 시작 ===')
+  console.log('form 데이터:', form)
+
+  if (pending.value) {
+    console.log('이미 처리 중...')
+    return
+  }
+
+  console.log('API 요청 시작...')
+  console.log('apiBase:', apiBase)
+
   pending.value = true
   try {
     form.files = files.value.map(f => ({ name: f.name, size: f.size, type: f.type }))
     form.createdAt = new Date().toISOString()
 
+    console.log('최종 전송 데이터:', form)
+    console.log('요청 URL:', `${apiBase}/inquiries`)
+
     // POST 해서 db.json
     const saved = await $fetch(`/inquiries`, { baseURL: apiBase, method: 'POST', body: form })
 
-    // 캐시 초기화
-    await refreshNuxtData(LIST_KEY)
+    console.log('서버 응답:', saved)
+
     toast.add({ severity: 'success', summary: '저장 완료', detail: '정상적으로 등록되었습니다.', life: 1800 })
     await router.replace(LIST_ROUTE)
-  } catch (err:any) {
+  } catch (err) {
+    console.error('에러 발생:', err)
     toast.add({ severity: 'error', summary: '실패', detail: err?.message || '저장에 실패했습니다.', life: 3000 })
   } finally {
     pending.value = false
+    console.log('=== submitInquiry 끝 ===')
   }
 }
 
-// - 작성 취소 함수
+// - 작성 취소 컨펌 알럿 함수
 function onCancel () {
   confirm.require({
-    group: 'inquiryNew',  // ⬅ 추가: 이 페이지 전용 인스턴스로 띄우기
+    group: 'inquiryNew',
     header: '작성 취소',
     message: '작성 중인 내용이 사라집니다. 취소하시겠습니까?',
     icon: 'pi pi-exclamation-triangle',
@@ -197,48 +234,43 @@ function onCancel () {
     }
   })
 }
-
 </script>
 
 <style scoped>
-
-/* 이 페이지 전용 ConfirmDialog 스타일 */
+/* 취소 콘펌 다이얼로그 스타일 */
 :deep(.confirm-inquiry-new.p-confirm-dialog) {
-  /* 다이얼로그 박스 */
   border-radius: 14px;
-  overflow: hidden; /* 둥근 모서리로 마스크 */
+  overflow: hidden;
 }
 
-/* 헤더 */
 :deep(.confirm-inquiry-new .p-dialog-header) {
   background: #f8fafc;
   padding: 14px 18px;
   border-bottom: 1px solid #e5e7eb;
 }
+
 :deep(.confirm-inquiry-new .p-dialog-title) {
   font-weight: 800;
   font-size: 16px;
   color: #111827;
 }
 
-/* 본문(아이콘+메시지 줄맞춤 개선) */
 :deep(.confirm-inquiry-new .p-confirm-dialog-content) {
   padding: 18px;
 }
+
 :deep(.confirm-inquiry-new .p-confirm-dialog-message) {
   font-size: 14px;
   color: #4b5563;
   line-height: 1.55;
 }
 
-/* 아이콘 톤(경고) */
 :deep(.confirm-inquiry-new .p-confirm-dialog-icon) {
   margin-right: 8px;
   font-size: 18px;
-  color: #f59e0b; /* 경고 노랑 */
+  color: #f59e0b;
 }
 
-/* 푸터 버튼 영역 */
 :deep(.confirm-inquiry-new .p-dialog-footer) {
   padding: 12px 18px;
   border-top: 1px solid #e5e7eb;
@@ -247,33 +279,94 @@ function onCancel () {
   justify-content: flex-end;
 }
 
-/* 기본 버튼 톤앤매너(파랑) */
 :deep(.confirm-inquiry-new .p-button) {
   border-radius: 10px;
   font-weight: 700;
   padding: 10px 14px;
 }
 
-/* 거절(계속 작성) 버튼: 윤곽형 */
 :deep(.confirm-inquiry-new .p-button:not(.p-button-danger)) {
   background: #fff;
   border: 1px solid #d1d5db;
   color: #111827;
 }
 
-/* 수락(취소하기) 버튼: 경고/위험 */
 :deep(.confirm-inquiry-new .p-button-danger) {
   background: #ef4444;
   border: none;
 }
 
-/* 반응형 width */
 :deep(.confirm-inquiry-new .p-dialog) {
   width: 92vw;
-  max-width: 420px; /* PC에서 보기 좋은 너비 */
+  max-width: 420px;
 }
 
+/* 👇 제출 콘펌 다이얼로그 스타일 추가 */
+:deep(.confirm-inquiry-submit.p-confirm-dialog) {
+  border-radius: 14px;
+  overflow: hidden;
+}
 
+:deep(.confirm-inquiry-submit .p-dialog-header) {
+  background: #f0f9ff;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+:deep(.confirm-inquiry-submit .p-dialog-title) {
+  font-weight: 800;
+  font-size: 16px;
+  color: #111827;
+}
+
+:deep(.confirm-inquiry-submit .p-confirm-dialog-content) {
+  padding: 18px;
+}
+
+:deep(.confirm-inquiry-submit .p-confirm-dialog-message) {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.55;
+}
+
+:deep(.confirm-inquiry-submit .p-confirm-dialog-icon) {
+  margin-right: 8px;
+  font-size: 18px;
+  color: #3b82f6; /* 파란색 아이콘 */
+}
+
+:deep(.confirm-inquiry-submit .p-dialog-footer) {
+  padding: 12px 18px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+:deep(.confirm-inquiry-submit .p-button) {
+  border-radius: 10px;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+
+:deep(.confirm-inquiry-submit .p-button:not(.p-button-primary)) {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  color: #111827;
+}
+
+:deep(.confirm-inquiry-submit .p-button-primary) {
+  background: #2955d1;
+  border: none;
+  color: #fff;
+}
+
+:deep(.confirm-inquiry-submit .p-dialog) {
+  width: 92vw;
+  max-width: 420px;
+}
+
+/* 기본 스타일들 */
 .page { padding: 16px 0 32px; }
 .page-title { font-size: 20px; font-weight: 800; margin: 0 0 14px; }
 .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:18px; }

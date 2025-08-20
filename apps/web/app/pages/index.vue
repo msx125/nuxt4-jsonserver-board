@@ -1,4 +1,5 @@
 <!-- html 작성 -->
+<!-- https://www.notion.so/25-08-20-2553b7ec3d6e80a79906cf837d38f24b?source=copy_link -->
 <template>
   <section class="card">
 
@@ -131,8 +132,9 @@ import { ref, watch, onMounted } from 'vue'
 const { public: { apiBase } } = useRuntimeConfig()
 
 type FileMeta = { name: string; size: number; type: string }
+
 type Inquiry = {
-  id: number
+  //id: number
   center: string
   type: string
   source: string
@@ -216,19 +218,7 @@ const writeNew = () => {
   navigateTo('/new')
 }
 
-// (선택) 탭 카운트: 현재 페이지 기준 그대로 두려면 inquiries 사용, 전체 기준이면 data로 변경
-const counts = computed<Record<string, number>>(() => {
-  const base = inquiries.value // 전체 기준으로 집계하려면 data.value 로 바꾸세요
-  const c: Record<string, number> = {}
-  for (const row of base) {
-    const key = (row as any).category || row.type || '기타'
-    c[key] = (c[key] || 0) + 1
-  }
-  return c
-})
 
-// 검색 관련
-// 검색 상태
 const searchField = ref<'title'>('title')
 const keyword = ref('')
 
