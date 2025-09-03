@@ -154,9 +154,14 @@ const total = ref(0)
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const pages = computed(() => Array.from({ length: totalPages.value }, (_, i) => i + 1))
 
+const LIST_KEY = 'inquiries-list'
+
+
+// 임시 로그인 키
+const AUTH_KEY = 'mockAuthToken'
+const isLoggedIn = ref(false)
 
 // 전체 데이터 가져오기
-const LIST_KEY = 'inquiries-list'
 const { data, pending, error, refresh } = await useAsyncData<Inquiry[]>(
     LIST_KEY,
     async () => {
@@ -172,13 +177,6 @@ const { data, pending, error, refresh } = await useAsyncData<Inquiry[]>(
     }
 )
 
-// ⬇ 변경 3) 현재 페이지에 보여줄 10개만 자르기
-const inquiries = computed(() => {
-  const list = filtered.value
-  const start = (page.value - 1) * pageSize
-  return list.slice(start, start + pageSize)
-})
-
 onMounted(() => {
   const saved = localStorage.getItem('inquiriesState')
   if (saved) {
@@ -187,12 +185,6 @@ onMounted(() => {
     if (k) keyword.value = k
   }
 })
-
-const fmtDate = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '')
-
-// 임시 로그인 키
-const AUTH_KEY = 'mockAuthToken'
-const isLoggedIn = ref(false)
 
 // 브라우저에서만 읽기
 onMounted(() => {
@@ -218,6 +210,14 @@ const writeNew = () => {
   navigateTo('/new')
 }
 
+// ⬇ 변경 3) 현재 페이지에 보여줄 10개만 자르기
+const inquiries = computed(() => {
+  const list = filtered.value
+  const start = (page.value - 1) * pageSize
+  return list.slice(start, start + pageSize)
+})
+
+const fmtDate = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '')
 
 const searchField = ref<'title'>('title')
 const keyword = ref('')
@@ -245,9 +245,6 @@ watch([page, keyword], ([p, k]) => {
 watch(filtered, (list) => {
   total.value = list.length
 }, { immediate: true })
-
-
-
 
 </script>
 

@@ -2,11 +2,11 @@
   <section class="page">
     <h1 class="page-title">1:1 문의 등록</h1>
 
-    <!-- 👇 이벤트 핸들러를 onSubmit으로 변경 -->
     <form class="card" @submit.prevent="onSubmit">
       <div class="row">
         <div class="field">
           <label class="label required">문의 센터</label>
+
           <select v-model="form.center" class="select" required>
             <option value="" disabled>선택</option>
             <option value="아이디벨 센터">아이디벨 센터</option>
@@ -34,6 +34,7 @@
             <option value="전화">전화</option>
           </select>
         </div>
+
       </div>
 
       <div class="row">
@@ -121,43 +122,6 @@ const toast = useToast()
 const { public: { apiBase } } = useRuntimeConfig()
 const LIST_KEY = 'inquiries-list'
 const LIST_ROUTE = '/'
-
-// 반응형 상태 모음
-const files = ref<File[]>([])
-const fileInput = ref<HTMLInputElement | null>(null)
-const pending = ref(false)
-
-// 필요한 변수
-const MAX_FILES = 5
-
-// 함수 모음
-// - 파일 첨부
-function onPickFiles (e: Event) {
-  const target = e.target as HTMLInputElement
-  const picked = Array.from(target.files || [])
-  const merged = [...files.value, ...picked].slice(0, MAX_FILES)
-  files.value = merged
-  if (fileInput.value) fileInput.value.value = ''
-}
-
-// - 파일 삭제
-function removeFile (i: number) {
-  files.value.splice(i, 1)
-}
-
-// - 파일 취소
-function clearFiles () {
-  files.value = []
-  if (fileInput.value) fileInput.value.value = ''
-}
-
-// - 파일 크기 표시
-function prettySize (bytes: number) {
-  if (bytes < 1024) return `${bytes} B`
-  const kb = bytes / 1024
-  if (kb < 1024) return `${kb.toFixed(1)} KB`
-  return `${(kb / 1024).toFixed(1)} MB`
-}
 
 // 제출시 컨펌 모달
 function onSubmit () {

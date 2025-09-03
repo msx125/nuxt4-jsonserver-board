@@ -135,6 +135,8 @@ const form = reactive<Inquiry>({
   answered:false, createdAt:'', files:[]
 })
 
+const fileInput = ref<HTMLInputElement|null>(null)
+
 // 선택 즉시 반영 + 롤백 스냅샷
 const MAX_FILES = 5
 const originalFiles = ref<FileMeta[]>([])
@@ -150,7 +152,6 @@ watch(
     { immediate: true }
 )
 
-const fileInput = ref<HTMLInputElement|null>(null)
 
 // 파일을 고르는 즉시 form.files에 메타로 합치기
 function onPickFiles (e: Event) {
